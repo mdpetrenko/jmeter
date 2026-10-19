@@ -1,0 +1,33 @@
+--- a/org/fife/ui/rsyntaxtextarea/WrappedSyntaxView.java	2023-01-03 09:55:20
++++ b/org/fife/ui/rsyntaxtextarea/WrappedSyntaxView.java	2026-10-19 13:44:08
+@@ -124,7 +124,16 @@
+ 			// FIXME:  Replace the code below with the commented-out line below.  This will
+ 			// allow long tokens to be broken at embedded spaces (such as MLC's).  But it
+ 			// currently throws BadLocationExceptions sometimes...
+-			float tokenWidth = t.getWidth(textArea, this, x0);
++			// JMeter patch: measuring the whole token is quadratic for a long token wrapped over
++			// many rows, so first look for the overflow only up to the end of the row.
++			// getOffsetBeforeX() returns an offset before the token's last char only on overflow.
++			float tokenWidth;
++			if (t.getOffsetBeforeX(textArea, this, x0, x0 + currentWidth) < t.getEndOffset() - 1) {
++				tokenWidth = Float.MAX_VALUE;
++			}
++			else {
++				tokenWidth = t.getWidth(textArea, this, x0);
++			}
+ 			if (tokenWidth>currentWidth) {
+ 				// If the current token alone is too long for this line,
+ 				// break at a character boundary.
+--- a/org/fife/ui/rsyntaxtextarea/TokenUtils.java	2022-02-21 22:49:04
++++ b/org/fife/ui/rsyntaxtextarea/TokenUtils.java	2026-10-19 13:44:10
+@@ -129,7 +129,9 @@
+ 			if (t.getOffset()!=pos) {
+ 				// Number of chars between p0 and token start.
+ 				int difference = pos - t.getOffset();
+-				x0 += t.getWidthUpTo(t.length()-difference+1, textArea, e, x0);
++				// JMeter patch: the width of the chars before pos (was "t.length()-difference+1",
++				// which measured almost the whole tail of a long token for every wrapped row)
++				x0 += t.getWidthUpTo(difference, textArea, e, x0);
+ 				tempToken.copyFrom(t);
+ 				tempToken.makeStartAt(pos);
+ 
