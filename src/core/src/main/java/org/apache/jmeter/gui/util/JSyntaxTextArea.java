@@ -64,6 +64,12 @@ public class JSyntaxTextArea extends RSyntaxTextArea {
     private static final int MAX_UNDOS = JMeterUtils.getPropDefault("jsyntaxtextarea.maxundos", 50);
     private static final String USER_FONT_FAMILY = JMeterUtils.getPropDefault("jsyntaxtextarea.font.family", null);
     private static final int USER_FONT_SIZE = JMeterUtils.getPropDefault("jsyntaxtextarea.font.size", -1);
+    // RSyntaxTextArea bracket matching is quadratic in the line length, so it is disabled for texts with longer lines
+    private static final int BRACKET_MATCHING_MAX_LINE_LENGTH =
+            JMeterUtils.getPropDefault("jsyntaxtextarea.bracketmatching.maxlinelength", 10000);
+
+    /** Bracket matching was requested, but is switched off because the current text has too long lines */
+    private boolean bracketMatchingSuppressed;
 
     private static final HierarchyListener GUTTER_THEME_PATCHER = e -> {
         if ((e.getChangeFlags() & HierarchyEvent.PARENT_CHANGED) != 0
@@ -307,6 +313,48 @@ public class JSyntaxTextArea extends RSyntaxTextArea {
             log.error("Dubious problem while setting text to {}", string, e);
         }
         discardAllEdits();
+    }
+
+    /**
+     * Sets the text with bracket matching switched off: setting the text moves the caret,
+     * and matching a bracket on a long line takes time quadratic in the line length.
+     * Bracket matching stays off when the text has a line longer than
+     * {@code jsyntaxtextarea.bracketmatching.maxlinelength}.
+     *
+     * @param t the new text
+     */
+    @Override
+    public void setText(String t) {
+        boolean bracketMatching = isBracketMatchingEnabled() || bracketMatchingSuppressed;
+        super.setBracketMatchingEnabled(false);
+        try {
+            super.setText(t);
+        } finally {
+            bracketMatchingSuppressed = bracketMatching && hasLineLongerThan(t, BRACKET_MATCHING_MAX_LINE_LENGTH);
+            super.setBracketMatchingEnabled(bracketMatching && !bracketMatchingSuppressed);
+        }
+    }
+
+    @Override
+    public void setBracketMatchingEnabled(boolean enabled) {
+        bracketMatchingSuppressed = false;
+        super.setBracketMatchingEnabled(enabled);
+    }
+
+    private static boolean hasLineLongerThan(String text, int maxLength) {
+        if (text == null || text.length() <= maxLength) {
+            return false;
+        }
+        int lineStart = 0;
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c == '\n' || c == '\r') {
+                lineStart = i + 1;
+            } else if (i - lineStart >= maxLength) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static Theme loadTheme(Class<?> klass, String name) {

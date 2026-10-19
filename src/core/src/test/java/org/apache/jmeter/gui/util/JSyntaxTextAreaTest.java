@@ -18,6 +18,8 @@
 package org.apache.jmeter.gui.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.awt.HeadlessException;
@@ -48,6 +50,29 @@ public class JSyntaxTextAreaTest extends JMeterTestCase {
             // Does not work in headless mode, which depends on value of java.awt.headless property
             // and the OS (e.g. might work on MacOS and not on Linux due to missing X11).
             System.out.println("WARNING for JSyntaxTextAreaTest.testSetLanguage test: does not work in headless mode");
+        }
+    }
+
+    @Test
+    public void testBracketMatchingDisabledForLongLines() {
+        try {
+            @SuppressWarnings("deprecation") // test code
+            JSyntaxTextArea textArea = new JSyntaxTextArea(30, 50, false);
+            assertTrue(textArea.isBracketMatchingEnabled(), "bracket matching is on by default");
+
+            String longLine = "{\"a\":[" + "1,".repeat(10_000) + "1]}";
+            textArea.setInitialText(longLine);
+            assertEquals(longLine, textArea.getText());
+            assertFalse(textArea.isBracketMatchingEnabled(), "bracket matching for a line longer than the limit");
+
+            textArea.setInitialText("{\n" + "  \"a\": 1,\n".repeat(10_000) + "}");
+            assertTrue(textArea.isBracketMatchingEnabled(), "bracket matching for many short lines");
+
+            textArea.setBracketMatchingEnabled(false);
+            textArea.setInitialText("{}");
+            assertFalse(textArea.isBracketMatchingEnabled(), "explicitly disabled bracket matching stays disabled");
+        } catch (HeadlessException he) {
+            System.out.println("WARNING for JSyntaxTextAreaTest.testBracketMatchingDisabledForLongLines test: does not work in headless mode");
         }
     }
 

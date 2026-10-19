@@ -1507,6 +1507,11 @@ JMETER-SERVER</source>
     Set to zero to disable undo feature in JSyntaxTextArea.<br/>
     Defaults to: <code>50</code>
 </property>
+<property name="jsyntaxtextarea.bracketmatching.maxlinelength">
+    Bracket matching is disabled in JSyntaxTextArea when the text has a line longer than this value,
+    as matching brackets on very long lines (e.g. a large single-line JSON request body) is slow.<br/>
+    Defaults to: <code>10000</code>
+</property>
 <property name="jsyntaxtextarea.font.family">
     Change the font on the (JSyntax) Text Areas. (Useful for HiDPI screens).<br/>
     Defaults to empty value, which means platform default monospaced font
