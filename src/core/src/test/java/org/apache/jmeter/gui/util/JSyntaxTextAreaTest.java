@@ -28,6 +28,7 @@ import java.lang.reflect.Modifier;
 import java.util.HashSet;
 import java.util.Properties;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.jmeter.junit.JMeterTestCase;
 import org.apache.jmeter.util.JMeterUtils;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
@@ -60,12 +61,12 @@ public class JSyntaxTextAreaTest extends JMeterTestCase {
             JSyntaxTextArea textArea = new JSyntaxTextArea(30, 50, false);
             assertTrue(textArea.isBracketMatchingEnabled(), "bracket matching is on by default");
 
-            String longLine = "{\"a\":[" + "1,".repeat(10_000) + "1]}";
+            String longLine = "{\"a\":[" + StringUtils.repeat("1,", 10_000) + "1]}";
             textArea.setInitialText(longLine);
             assertEquals(longLine, textArea.getText());
             assertFalse(textArea.isBracketMatchingEnabled(), "bracket matching for a line longer than the limit");
 
-            textArea.setInitialText("{\n" + "  \"a\": 1,\n".repeat(10_000) + "}");
+            textArea.setInitialText("{\n" + StringUtils.repeat("  \"a\": 1,\n", 10_000) + "}");
             assertTrue(textArea.isBracketMatchingEnabled(), "bracket matching for many short lines");
 
             textArea.setBracketMatchingEnabled(false);
