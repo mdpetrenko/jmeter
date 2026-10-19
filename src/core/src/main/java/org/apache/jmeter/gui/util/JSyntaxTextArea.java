@@ -320,16 +320,28 @@ public class JSyntaxTextArea extends RSyntaxTextArea {
      * and matching a bracket on a long line takes time quadratic in the line length.
      * Bracket matching stays off when the text has a line longer than
      * {@code jsyntaxtextarea.bracketmatching.maxlinelength}.
+     * <p>
+     * Line wrap is switched off as well while the text is set into a text area that is not showing
+     * (e.g. while a test plan is loaded): such an area has (almost) no width, so wrapping a long line
+     * produces a huge number of rows, each measured from the start of its token. Wrapping is computed
+     * later, when the area is shown with its real width.
      *
      * @param t the new text
      */
     @Override
     public void setText(String t) {
         boolean bracketMatching = isBracketMatchingEnabled() || bracketMatchingSuppressed;
+        boolean deferLineWrap = getLineWrap() && !isShowing();
         super.setBracketMatchingEnabled(false);
+        if (deferLineWrap) {
+            super.setLineWrap(false);
+        }
         try {
             super.setText(t);
         } finally {
+            if (deferLineWrap) {
+                super.setLineWrap(true);
+            }
             bracketMatchingSuppressed = bracketMatching && hasLineLongerThan(t, BRACKET_MATCHING_MAX_LINE_LENGTH);
             super.setBracketMatchingEnabled(bracketMatching && !bracketMatchingSuppressed);
         }

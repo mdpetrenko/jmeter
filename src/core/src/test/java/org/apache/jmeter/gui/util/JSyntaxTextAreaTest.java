@@ -72,6 +72,13 @@ public class JSyntaxTextAreaTest extends JMeterTestCase {
             textArea.setBracketMatchingEnabled(false);
             textArea.setInitialText("{}");
             assertFalse(textArea.isBracketMatchingEnabled(), "explicitly disabled bracket matching stays disabled");
+
+            textArea.setLineWrap(true);
+            textArea.setInitialText(longLine);
+            assertTrue(textArea.getLineWrap(), "line wrap is restored after setting text into a hidden text area");
+            textArea.setLineWrap(false);
+            textArea.setInitialText(longLine);
+            assertFalse(textArea.getLineWrap(), "disabled line wrap stays disabled");
         } catch (HeadlessException he) {
             System.out.println("WARNING for JSyntaxTextAreaTest.testBracketMatchingDisabledForLongLines test: does not work in headless mode");
         }
